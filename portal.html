@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Türkiye CBS | Tematik İl Haritası</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Leaflet.js -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f7f9;
+        }
+        
+        .navbar {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo h1 {
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+        }
+        
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem;
+        }
+        
+        .nav-menu a.active {
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .iller-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+        
+        .iller-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .iller-header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tema-kontrol {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .tema-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 30px;
+            background: #e0e0e0;
+            color: #333;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .tema-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+        
+        .tema-btn.active {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        .harita-konteynir {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        #harita {
+            height: 600px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            background: #f8f9fa;
+            z-index: 1;
+        }
+        
+        .lejant {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        .lejant h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .renk-skalasi {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        
+        .renk-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .renk-kutu {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+        
+        .bilgi-kutu {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+        
+        .bilgi-kutu h4 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .il-detay-tablo {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .il-detay-tablo td {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .il-detay-tablo td:first-child {
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .il-detay-tablo td:last-child {
+            text-align: right;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .istatistikler {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .istatistik-kart {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .istatistik-deger {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #3498db;
+            margin: 0.5rem 0;
+        }
+        
+        .il-listesi {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .il-listesi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .il-ara {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 250px;
+        }
+        
+        .il-sirala {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .il-tablo {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 10px;
+        }
+        
+        .il-tablo table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .il-tablo th {
+            background: #2c3e50;
+            color: white;
+            padding: 0.8rem;
+            position: sticky;
+            top: 0;
+        }
+        
+        .il-tablo td {
+            padding: 0.8rem;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        
+        .il-tablo tr:hover td {
+            background: #f0f7ff;
+        }
+        
+        .il-tablo tr.selected {
+            background: #e3f2fd;
+        }
+        
+        footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 1.5rem 0;
+            margin-top: 2rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .harita-konteynir {
+                grid-template-columns: 1fr;
+            }
+            
+            #harita {
+                height: 400px;
+            }
+            
+            .istatistikler {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .istatistikler {
+                grid-template-columns: 1fr;
+            }
+            
+            .il-listesi-header {
+                flex-direction: column;
+            }
+            
+            .il-ara {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+   <nav class="navbar">
+    <div class="container">
+        <div class="logo">
+            <h1>🌍 Türkiye CBS Veri Portalı</h1>
+        </div>
+        <ul class="nav-menu">
+            <li><a href="index.html">Ana Sayfa</a></li>
+            <li><a href="portal.html" class="active">Tematik Harita</a></li>
+            <li><a href="testler.html">Testler</a></li>
+        </ul>
+    </div>
+</nav>
+
+    <main>
+        <div class="iller-container">
+            <div class="iller-header">
+                <h1>🇹🇷 Türkiye Tematik İl Haritası</h1>
+                <p>İllere tıklayarak detaylı bilgileri görüntüleyin</p>
+            </div>
+            
+            <div class="tema-kontrol">
+                <button class="tema-btn active" onclick="temaDegistir('nufus')">👥 Nüfus</button>
+                <button class="tema-btn" onclick="temaDegistir('yogunluk')">📊 Nüfus Yoğunluğu</button>
+                <button class="tema-btn" onclick="temaDegistir('yuzolcumu')">🗺️ Yüzölçümü</button>
+                <button class="tema-btn" onclick="temaDegistir('bolge')">📍 Bölgeler</button>
+            </div>
+            
+            <div class="harita-konteynir">
+                <div id="harita"></div>
+                 
+            <div class="lejant">
+    <h3>📊 Lejant</h3>
+    <div id="lejant-icerik" class="renk-skalasi">
+        <!-- JavaScript ile doldurulacak -->
+    </div>
+    
+            <div class="bilgi-kutu" id="il-bilgi">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h4 style="margin: 0;">🏙️ İl Bilgileri</h4>
+            <button id="turkiyeGenelDon" class="zoom-out-btn" title="Türkiye Geneline Dön" style="display: none;">✕</button>
+        </div>
+        <p style="color: #666;">Haritadan bir il seçin</p>
+    </div>
+</div>
+            
+            <div class="istatistikler">
+                <div class="istatistik-kart">
+                    <div class="istatistik-etiket">Toplam Nüfus</div>
+                    <div class="istatistik-deger" id="toplam-nufus">-</div>
+                </div>
+                <div class="istatistik-kart">
+                    <div class="istatistik-etiket">En Kalabalık</div>
+                    <div class="istatistik-deger" id="en-kalabalik">-</div>
+                </div>
+                <div class="istatistik-kart">
+                    <div class="istatistik-etiket">En Büyük İl</div>
+                    <div class="istatistik-deger" id="en-buyuk">-</div>
+                </div>
+                <div class="istatistik-kart">
+                    <div class="istatistik-etiket">Ortalama Nüfus</div>
+                    <div class="istatistik-deger" id="ortalama-nufus">-</div>
+                </div>
+            </div>
+            
+            <div class="il-listesi">
+                <div class="il-listesi-header">
+                    <h3>📋 İller Listesi</h3>
+                    <div>
+                        <input type="text" id="ilAra" class="il-ara" placeholder="İl veya plaka ara...">
+                        <select id="ilSirala" class="il-sirala">
+                            <option value="plaka">Plaka</option>
+                            <option value="isim">İsim</option>
+                            <option value="nufusAz">Nüfus (Azalan)</option>
+                            <option value="nufusCok">Nüfus (Artan)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="il-tablo">
+                    <table id="illerTablosu">
+                        <thead>
+                            <tr>
+                                <th>Plaka</th>
+                                <th>İl</th>
+                                <th>Nüfus</th>
+                                <th>Yüzölçümü</th>
+                                <th>Yoğunluk</th>
+                                <th>Bölge</th>
+                            </tr>
+                        </thead>
+                        <tbody id="illerTablosuBody">
+                            <!-- JS ile doldurulacak -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+    <div class="container">
+        <p>Coğrafya öğretiminde materyaller dersi kapsamında hazırlanmıştır</p>
+        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Sürüm: V02 | Veri kaynağı: ArcMap CBS | Nüfus: 2025 TÜİK</p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem;">
+            <a href="index.html" style="color: white; text-decoration: none; opacity: 0.8;">← Ana Sayfaya Dön</a>
+        </p>
+    </div>
+</footer>
+
+<script>
+    // ========== BÖLGE RENKLERİ (Sadece tematik harita için) ==========
+    const bolgeRenkleri = {
+        'Marmara': '#e74c3c',
+        'Ege': '#3498db',
+        'Akdeniz': '#f39c12',
+        'İç Anadolu': '#27ae60',
+        'Karadeniz': '#9b59b6',
+        'Doğu Anadolu': '#e67e22',
+        'Güneydoğu Anadolu': '#1abc9c'
+    };
+
+    // ========== DEĞİŞKENLER ==========
+    let harita, geoJsonLayer, aktifTema = 'nufus';
+    let ilVerileri = {}; // JSON'dan okunacak
+
+    // ========== RENK SKALASI ==========
+    function renkSkalasi(deger) {
+        const r = Math.floor(247 - (247 - 8) * deger);
+        const g = Math.floor(251 - (251 - 48) * deger);
+        const b = Math.floor(255 - (255 - 107) * deger);
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    // ========== SAYFA YÜKLENDİĞİNDE ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Sayfa yüklendi - ArcMap JSON okunuyor...');
+        haritayiBaslat();
+    });
+
+    // ========== HARİTAYI BAŞLAT ==========
+    function haritayiBaslat() {
+        harita = L.map('harita').setView([39.0, 35.0], 6);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(harita);
+
+        // JSON dosyasını yükle
+        fetch('il.json')
+            .then(response => {
+                if (!response.ok) throw new Error('il.json bulunamadı');
+                return response.json();
+            })
+            .then(veri => {
+                console.log('✅ il.json yüklendi');
+                
+                // JSON'un yapısını konsola yazdır
+                if (veri.features && veri.features.length > 0) {
+                    const ilkIl = veri.features[0];
+                    console.log('📌 İlk ilin TÜM ÖZELLİKLERİ:', ilkIl.properties);
+                    console.log('📌 Mevcut sütunlar:', Object.keys(ilkIl.properties));
+                    console.log('📌 "AD" sütunu değeri:', ilkIl.properties["AD"]);
+                }
+                
+                // JSON'dan il verilerini oku
+                ilVerileri = jsonDanIlVerileriniOku(veri);
+                console.log('📊 Okunan il sayısı:', Object.keys(ilVerileri).length);
+                
+                // İlk 5 ili konsolda göster
+                const ornekIller = Object.keys(ilVerileri).slice(0, 5);
+                ornekIller.forEach(plaka => {
+                    console.log(`📊 Örnek il ${plaka}:`, ilVerileri[plaka]);
+                });
+                
+                // Tabloyu doldur
+                tabloyuDoldur();
+                
+                // İstatistikleri güncelle
+                istatistikleriGuncelle();
+                
+                // GeoJSON layer'ı oluştur
+                geoJsonLayer = L.geoJSON(veri, {
+                    style: function(feature) {
+                        return ilStili(feature);
+                    },
+                    onEachFeature: function(feature, layer) {
+                        // ArcMap'ten gelen özellikler
+                        const props = feature.properties || {};
+                        
+                        // "Plaka" sütunundan plaka kodunu al
+                        let plakaKodu = null;
+                        if (props["Plaka"]) {
+                            plakaKodu = props["Plaka"].toString().padStart(2, '0');
+                        }
+                        
+                        // "AD" sütunundan il adını al
+                        let ilAdi = 'İsimsiz İl';
+                        if (props["AD"]) {
+                            ilAdi = props["AD"].toString().trim();
+                        }
+                        
+                        // Tooltip ekle (il adını göster)
+                        layer.bindTooltip(ilAdi, {
+                            permanent: false,
+                            direction: 'center',
+                            className: 'il-tooltip'
+                        });
+                        
+                        // TIKLAMA OLAYI
+                        layer.on('click', function() {
+                            if (plakaKodu && ilVerileri[plakaKodu]) {
+                                // Plaka ile eşleşen il verisini göster
+                                ilGoster(plakaKodu, ilVerileri[plakaKodu], layer);
+                            } else {
+                                alert(`"${ilAdi}" için plaka kodu (${plakaKodu || '?'}) bulunamadı.`);
+                            }
+                        });
+                        
+                        // Hover efektleri
+                        layer.on('mouseover', function() {
+                            layer.setStyle({
+                                weight: 3,
+                                color: '#333',
+                                fillOpacity: 0.9
+                            });
+                        });
+                        
+                        layer.on('mouseout', function() {
+                            geoJsonLayer.resetStyle(layer);
+                        });
+                    }
+                }).addTo(harita);
+                
+                harita.fitBounds(geoJsonLayer.getBounds());
+                console.log('✅ ArcMap haritası başarıyla yüklendi - "AD" sütunu kullanılıyor');
+            })
+            .catch(hata => {
+                console.error('❌ Hata:', hata);
+                document.getElementById('harita').innerHTML = `
+                    <div style="padding: 2rem; text-align: center; background: #fff3f3; border-radius: 10px;">
+                        <h3 style="color: #e74c3c;">❌ Harita yüklenemedi</h3>
+                        <p>${hata.message}</p>
+                        <p>il.json dosyasının konumunu kontrol edin.</p>
+                    </div>
+                `;
+            });
+    }
+    // ========== TÜRKİYE GENELİNE DÖN ==========
+function turkiyeGenelineDon() {
+    if (harita) {
+        harita.setView([39.0, 35.0], 6);
+        
+        // Butonu gizle
+        document.getElementById('turkiyeGenelDon').style.display = 'none';
+        
+        // Bilgi kutusunu sıfırla
+        document.getElementById('il-bilgi').innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <h4 style="margin: 0;">🏙️ İl Bilgileri</h4>
+                <button id="turkiyeGenelDon" class="zoom-out-btn" title="Türkiye Geneline Dön" style="display: none;">✕</button>
+            </div>
+            <p style="color: #666;">Haritadan bir il seçin</p>
+        `;
+        
+        // Butona tekrar olay dinleyicisi ekle
+        document.getElementById('turkiyeGenelDon').addEventListener('click', turkiyeGenelineDon);
+        
+        // Layer stillerini sıfırla
+        if (geoJsonLayer) {
+            geoJsonLayer.eachLayer(function(layer) {
+                geoJsonLayer.resetStyle(layer);
+            });
+        }
+    }
+}
+
+    // ========== JSON'DAN İL VERİLERİNİ OKU ==========
+    function jsonDanIlVerileriniOku(veri) {
+        const iller = {};
+        
+        if (!veri.features || !Array.isArray(veri.features)) {
+            console.error('JSON formatı hatalı: features dizisi bulunamadı');
+            return iller;
+        }
+        
+        veri.features.forEach((feature, index) => {
+            const props = feature.properties || {};
+            
+            // Plaka kodunu al
+            let plakaKodu = null;
+            if (props["Plaka"]) {
+                plakaKodu = props["Plaka"].toString().padStart(2, '0');
+            }
+            
+            if (!plakaKodu) {
+                console.warn(`${index}. özellikte plaka kodu yok:`, props);
+                return;
+            }
+            
+            // Nüfus verisini al
+            let nufus = 0;
+            if (props["Nüfus"]) {
+                nufus = parseInt(props["Nüfus"]);
+                if (isNaN(nufus)) nufus = 0;
+            }
+            
+            // "AD" sütunundan il adını al
+            let ilAdi = `İl-${plakaKodu}`; // Varsayılan
+            if (props["AD"]) {
+                ilAdi = props["AD"].toString().trim();
+            }
+            
+            // Yüzölçümü (eğer varsa)
+            let yuzolcumu = 10000; // Varsayılan
+            if (props["Yüzölçümü"] || props["yuzolcumu"] || props["area"] || props["Alan"]) {
+                yuzolcumu = parseFloat(props["Yüzölçümü"] || props["yuzolcumu"] || props["area"] || props["Alan"]);
+                if (isNaN(yuzolcumu)) yuzolcumu = 10000;
+            }
+            
+            // Bölge (eğer varsa)
+            let bolge = "Diğer";
+            if (props["Bölge"] || props["bolge"] || props["region"] || props["Bolge"]) {
+                bolge = props["Bölge"] || props["bolge"] || props["region"] || props["Bolge"];
+            }
+            
+            // Veriyi kaydet
+            iller[plakaKodu] = {
+                il: ilAdi,
+                nufus: nufus,
+                yuzolcumu: yuzolcumu,
+                bolge: bolge
+            };
+        });
+        
+        return iller;
+    }
+
+    // ========== İL STİLİ (TEMATİK RENKLENDİRME) ==========
+    function ilStili(feature) {
+        const props = feature.properties || {};
+        let plakaKodu = null;
+        
+        if (props["Plaka"]) {
+            plakaKodu = props["Plaka"].toString().padStart(2, '0');
+        }
+        
+        const il = plakaKodu ? ilVerileri[plakaKodu] : null;
+        
+        // Varsayılan renk
+        let fillColor = '#cccccc';
+        
+        if (il && il.nufus > 0) {
+            switch(aktifTema) {
+                case 'nufus':
+                    const nufuslar = Object.values(ilVerileri).map(i => i.nufus).filter(n => n > 0);
+                    const maxNufus = Math.max(...nufuslar);
+                    fillColor = renkSkalasi(il.nufus / maxNufus);
+                    break;
+                    
+                case 'yogunluk':
+                    if (il.yuzolcumu && il.yuzolcumu > 0) {
+                        const yogunluk = il.nufus / il.yuzolcumu;
+                        const maxYogunluk = 2867; // İstanbul referans
+                        fillColor = renkSkalasi(Math.min(yogunluk / maxYogunluk, 1));
+                    }
+                    break;
+                    
+                case 'yuzolcumu':
+                    const yuzolcumleri = Object.values(ilVerileri).map(i => i.yuzolcumu).filter(y => y > 0);
+                    const maxYuzolcumu = Math.max(...yuzolcumleri);
+                    fillColor = renkSkalasi(il.yuzolcumu / maxYuzolcumu);
+                    break;
+                    
+                case 'bolge':
+                    fillColor = bolgeRenkleri[il.bolge] || '#95a5a6';
+                    break;
+            }
+        }
+        
+        return {
+            fillColor: fillColor,
+            weight: 1,
+            color: 'white',
+            fillOpacity: 0.8
+        };
+    }
+
+    // ========== İL GÖSTER ==========
+    function ilGoster(plaka, il, layer) {
+        const bilgiKutu = document.getElementById('il-bilgi');
+        const yogunluk = il.yuzolcumu > 0 ? Math.round(il.nufus / il.yuzolcumu) : 0;
+        
+        bilgiKutu.innerHTML = `
+            <h4>🏙️ ${il.il}</h4>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 0.5rem 0; border-bottom: 1px solid #ddd; font-weight: bold;">Plaka Kodu:</td>
+                    <td style="padding: 0.5rem 0; border-bottom: 1px solid #ddd; text-align: right; font-weight: bold; color: #3498db;">${plaka}</td></tr>
+                <tr><td style="padding: 0.5rem 0; border-bottom: 1px solid #ddd; font-weight: bold;">Nüfus (2025):</td>
+                    <td style="padding: 0.5rem 0; border-bottom: 1px solid #ddd; text-align: right;">${il.nufus.toLocaleString('tr-TR')}</td></tr>
+                <tr><td style="padding: 0.5rem 0; border-bottom: 1px solid #ddd; font-weight: bold;">Yüzölçümü:</td>
+                    <td style="padding: 0.5rem 0; border-bottom: 1px solid #ddd; text-align: right;">${il.yuzolcumu.toLocaleString('tr-TR')} km²</td></tr>
+                <tr><td style="padding: 0.5rem 0; border-bottom: 1px solid #ddd; font-weight: bold;">Nüfus Yoğunluğu:</td>
+                    <td style="padding: 0.5rem 0; border-bottom: 1px solid #ddd; text-align: right;">${yogunluk.toLocaleString('tr-TR')} kişi/km²</td></tr>
+                <tr><td style="padding: 0.5rem 0; font-weight: bold;">Bölge:</td>
+                    <td style="padding: 0.5rem 0; text-align: right;">${il.bolge}</td></tr>
+            </table>
+        `;
+        
+        // Tabloda seçili satırı işaretle
+        document.querySelectorAll('#illerTablosu tbody tr').forEach(row => {
+            row.classList.remove('selected');
+            if (row.cells[0].textContent === plaka) {
+                row.classList.add('selected');
+                row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        });
+        
+        // Zoom yap
+        if (layer && layer.getBounds) {
+            harita.fitBounds(layer.getBounds());
+        }
+    }
+    // ========== İL GÖSTER (GÜNCELLENMİŞ) ==========
+function ilGoster(plaka, il, layer) {
+    const bilgiKutu = document.getElementById('il-bilgi');
+    const yogunluk = il.yuzolcumu > 0 ? Math.round(il.nufus / il.yuzolcumu) : 0;
+    
+    bilgiKutu.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h4 style="margin: 0;">🏙️ ${il.il}</h4>
+            <button id="turkiyeGenelDon" class="zoom-out-btn" title="Türkiye Geneline Dön">✕</button>
+        </div>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 0.3rem 0; border-bottom: 1px solid #ddd; font-weight: bold;">Plaka Kodu:</td>
+                <td style="padding: 0.3rem 0; border-bottom: 1px solid #ddd; text-align: right; font-weight: bold; color: #3498db;">${plaka}</td></tr>
+            <tr><td style="padding: 0.3rem 0; border-bottom: 1px solid #ddd; font-weight: bold;">Nüfus (2025):</td>
+                <td style="padding: 0.3rem 0; border-bottom: 1px solid #ddd; text-align: right;">${il.nufus.toLocaleString('tr-TR')}</td></tr>
+            <tr><td style="padding: 0.3rem 0; border-bottom: 1px solid #ddd; font-weight: bold;">Yüzölçümü:</td>
+                <td style="padding: 0.3rem 0; border-bottom: 1px solid #ddd; text-align: right;">${il.yuzolcumu.toLocaleString('tr-TR')} km²</td></tr>
+            <tr><td style="padding: 0.3rem 0; border-bottom: 1px solid #ddd; font-weight: bold;">Nüfus Yoğunluğu:</td>
+                <td style="padding: 0.3rem 0; border-bottom: 1px solid #ddd; text-align: right;">${yogunluk.toLocaleString('tr-TR')} kişi/km²</td></tr>
+            <tr><td style="padding: 0.3rem 0; font-weight: bold;">Bölge:</td>
+                <td style="padding: 0.3rem 0; text-align: right;">${il.bolge}</td></tr>
+        </table>
+    `;
+    
+    // Butona tıklama olayı ekle
+    document.getElementById('turkiyeGenelDon').addEventListener('click', turkiyeGenelineDon);
+    
+    // Tabloda seçili satırı işaretle
+    document.querySelectorAll('#illerTablosu tbody tr').forEach(row => {
+        row.classList.remove('selected');
+        if (row.cells[0].textContent === plaka) {
+            row.classList.add('selected');
+            row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    });
+    
+    // Zoom yap
+    if (layer && layer.getBounds) {
+        harita.fitBounds(layer.getBounds());
+    }
+}
+
+    // ========== TEMA DEĞİŞTİR ==========
+    function temaDegistir(tema) {
+        aktifTema = tema;
+        
+        document.querySelectorAll('.tema-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        if (geoJsonLayer) {
+            geoJsonLayer.eachLayer(function(layer) {
+                layer.setStyle(ilStili(layer.feature));
+            });
+            lejantGuncelle(tema);
+        }
+    }
+
+    // ========== LEJANTI GÜNCELLE ==========
+    function lejantGuncelle(tema) {
+        const lejantIcerik = document.getElementById('lejant-icerik');
+        let html = '';
+        
+        if (tema === 'bolge') {
+            html = `
+                <div class="renk-item"><div class="renk-kutu" style="background: #e74c3c"></div>Marmara</div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #3498db"></div>Ege</div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #f39c12"></div>Akdeniz</div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #27ae60"></div>İç Anadolu</div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #9b59b6"></div>Karadeniz</div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #e67e22"></div>Doğu Anadolu</div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #1abc9c"></div>Güneydoğu Anadolu</div>
+            `;
+        } else {
+            const basliklar = {
+                'nufus': { dusuk: 'Az Nüfuslu', yuksek: 'Kalabalık' },
+                'yogunluk': { dusuk: 'Seyrek Nüfus', yuksek: 'Yoğun Nüfus' },
+                'yuzolcumu': { dusuk: 'Küçük Yüzölçümü', yuksek: 'Büyük Yüzölçümü' }
+            };
+            
+            html = `
+                <div class="renk-item">
+                    <div class="renk-kutu" style="background: #f7fbff"></div>
+                    <span>${basliklar[tema].dusuk}</span>
+                </div>
+                <div class="renk-item">
+                    <div class="renk-kutu" style="background: #08306b"></div>
+                    <span>${basliklar[tema].yuksek}</span>
+                </div>
+            `;
+        }
+        
+        lejantIcerik.innerHTML = html;
+    }
+
+    // ========== TABLOYU DOLDUR ==========
+    function tabloyuDoldur() {
+        const tbody = document.getElementById('illerTablosuBody');
+        tbody.innerHTML = '';
+        
+        // Plakaya göre sırala
+        Object.keys(ilVerileri).sort((a, b) => parseInt(a) - parseInt(b)).forEach(plaka => {
+            const il = ilVerileri[plaka];
+            if (!il || il.nufus === 0) return;
+            
+            const yogunluk = il.yuzolcumu > 0 ? Math.round(il.nufus / il.yuzolcumu) : 0;
+            const row = document.createElement('tr');
+            row.setAttribute('data-plaka', plaka);
+            row.innerHTML = `
+                <td>${plaka}</td>
+                <td>${il.il}</td>
+                <td>${il.nufus.toLocaleString('tr-TR')}</td>
+                <td>${il.yuzolcumu.toLocaleString('tr-TR')} km²</td>
+                <td>${yogunluk.toLocaleString('tr-TR')}</td>
+                <td>${il.bolge}</td>
+            `;
+            
+            // Tablo satırına tıklanınca haritada ilgili ili bul
+            row.addEventListener('click', function() {
+                const plaka = this.cells[0].textContent;
+                if (geoJsonLayer) {
+                    geoJsonLayer.eachLayer(function(layer) {
+                        let layerPlaka = null;
+                        if (layer.feature.properties && layer.feature.properties["Plaka"]) {
+                            layerPlaka = layer.feature.properties["Plaka"].toString().padStart(2, '0');
+                        }
+                        if (layerPlaka === plaka) {
+                            ilGoster(plaka, ilVerileri[plaka], layer);
+                            
+                            // Layer'ı geçici olarak vurgula
+                            layer.setStyle({ weight: 3, color: '#333', fillOpacity: 0.9 });
+                            setTimeout(() => geoJsonLayer.resetStyle(layer), 1000);
+                        }
+                    });
+                }
+            });
+            
+            tbody.appendChild(row);
+        });
+    }
+
+    // ========== İSTATİSTİKLERİ GÜNCELLE ==========
+    function istatistikleriGuncelle() {
+        const nufuslar = Object.values(ilVerileri).map(i => i.nufus).filter(n => n > 0);
+        const toplamNufus = nufuslar.reduce((t, i) => t + i, 0);
+        
+        // En kalabalık ili bul
+        let enKalabalik = { il: '', nufus: 0 };
+        Object.values(ilVerileri).forEach(il => {
+            if (il.nufus > enKalabalik.nufus) {
+                enKalabalik = il;
+            }
+        });
+        
+        // En büyük ili bul (yüzölçümü)
+        let enBuyuk = { il: '', yuzolcumu: 0 };
+        Object.values(ilVerileri).forEach(il => {
+            if (il.yuzolcumu > enBuyuk.yuzolcumu) {
+                enBuyuk = il;
+            }
+        });
+        
+        const ortalama = Math.round(toplamNufus / nufuslar.length);
+        
+        document.getElementById('toplam-nufus').textContent = toplamNufus.toLocaleString('tr-TR');
+        document.getElementById('en-kalabalik').textContent = enKalabalik.il;
+        document.getElementById('en-buyuk').textContent = enBuyuk.il;
+        document.getElementById('ortalama-nufus').textContent = ortalama.toLocaleString('tr-TR');
+    }
+
+    // ========== İL ARAMA ==========
+    document.getElementById('ilAra').addEventListener('keyup', function() {
+        const arama = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#illerTablosu tbody tr');
+        
+        rows.forEach(row => {
+            const ilAdi = row.cells[1].textContent.toLowerCase();
+            const plaka = row.cells[0].textContent;
+            row.style.display = (ilAdi.includes(arama) || plaka.includes(arama)) ? '' : 'none';
+        });
+    });
+
+    // ========== İL SIRALAMA ==========
+    document.getElementById('ilSirala').addEventListener('change', function() {
+        const value = this.value;
+        const tbody = document.querySelector('#illerTablosu tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        rows.sort((a, b) => {
+            if (value === 'plaka') {
+                return parseInt(a.cells[0].textContent) - parseInt(b.cells[0].textContent);
+            } else if (value === 'isim') {
+                return a.cells[1].textContent.localeCompare(b.cells[1].textContent);
+            } else if (value === 'nufusAz') {
+                return parseInt(b.cells[2].textContent.replace(/\./g, '')) - parseInt(a.cells[2].textContent.replace(/\./g, ''));
+            } else {
+                return parseInt(a.cells[2].textContent.replace(/\./g, '')) - parseInt(b.cells[2].textContent.replace(/\./g, ''));
+            }
+        });
+        
+        tbody.innerHTML = '';
+        rows.forEach(row => tbody.appendChild(row));
+    });
+</script>
+</body>
+</html>

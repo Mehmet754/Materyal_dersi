@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coğrafya Testleri | Lise Coğrafya</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .quiz-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .quiz-header h2 {
+            color: #2c3e50;
+            font-size: 2rem;
+        }
+        
+        .quiz-info {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 1rem 0;
+            color: #666;
+        }
+        
+        .question-box {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .question {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #2c3e50;
+        }
+        
+        .options {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .option:hover {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+        
+        .option.selected {
+            border-color: #667eea;
+            background: #e6e9ff;
+        }
+        
+        .option input[type="radio"] {
+            margin-right: 1rem;
+        }
+        
+        .quiz-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        
+        .quiz-btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .quiz-btn.next {
+            background: #667eea;
+            color: white;
+        }
+        
+        .quiz-btn.prev {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .quiz-btn.submit {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .quiz-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .result-box {
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            margin-top: 2rem;
+        }
+        
+        .score {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+        
+        .progress {
+            height: 100%;
+            background: #667eea;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+        
+        .topic-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .topic-card {
+            background: white;
+            padding: 1.5rem;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .topic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .topic-card.selected {
+            border-color: #667eea;
+            background: #e6e9ff;
+        }
+        
+        .topic-card i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigasyon (aynı) -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <h1>🌍 Coğrafya Dünyası</h1>
+            </div>
+            <ul class="nav-menu">
+    <li><a href="index.html">Ana Sayfa</a></li>
+    <li><a href="portal.html">Tematik Harita</a></li>
+    <li><a href="testler.html" class="active">Testler</a></li>
+</ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="quiz-container" id="quizContainer">
+                <!-- Konu Seçim Ekranı -->
+                <div id="topicSelection">
+                    <div class="quiz-header">
+                        <h2>📝 Coğrafya Testleri</h2>
+                        <p>Hangi konuda kendini test etmek istersin?</p>
+                    </div>
+                    
+                    <div class="topic-selector">
+                        <div class="topic-card" onclick="selectTopic('harita')">
+                            <div>🗺️</div>
+                            <h3>Harita Bilgisi</h3>
+                            <p>15 Soru</p>
+                        </div>
+                        <div class="topic-card" onclick="selectTopic('iklim')">
+                            <div>🌤️</div>
+                            <h3>İklimler</h3>
+                            <p>12 Soru</p>
+                        </div>
+                        <div class="topic-card" onclick="selectTopic('turkiye')">
+                            <div>🇹🇷</div>
+                            <h3>Türkiye Coğrafyası</h3>
+                            <p>20 Soru</p>
+                        </div>
+                        <div class="topic-card" onclick="selectTopic('dunya')">
+                            <div>🌎</div>
+                            <h3>Dünya Coğrafyası</h3>
+                            <p>18 Soru</p>
+                        </div>
+                    </div>
+                    
+                    <button class="quiz-btn next" onclick="startQuiz()" style="width: 100%; margin-top: 2rem;" id="startBtn" disabled>Teste Başla</button>
+                </div>
+                
+                <!-- Test Çözme Ekranı (başlangıçta gizli) -->
+                <div id="quizArea" style="display: none;">
+                    <div class="quiz-header">
+                        <h2 id="topicTitle">Harita Bilgisi Testi</h2>
+                        <div class="quiz-info">
+                            <span>Soru <span id="currentQuestion">1</span>/<span id="totalQuestions">15</span></span>
+                            <span>Doğru: <span id="correctCount">0</span></span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress" id="progressBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="question-box" id="questionBox">
+                        <!-- Sorular JS ile doldurulacak -->
+                    </div>
+                    
+                    <div class="quiz-controls">
+                        <button class="quiz-btn prev" id="prevBtn" onclick="prevQuestion()" disabled>← Önceki</button>
+                        <button class="quiz-btn next" id="nextBtn" onclick="nextQuestion()">Sonraki →</button>
+                        <button class="quiz-btn submit" id="submitBtn" onclick="submitQuiz()" style="display: none;">Testi Bitir</button>
+                    </div>
+                </div>
+                
+                <!-- Sonuç Ekranı (başlangıçta gizli) -->
+                <div id="resultArea" style="display: none;">
+                    <!-- JS ile doldurulacak -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Coğrafya Dünyası. Tüm hakları saklıdır.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Test verileri
+        const quizData = {
+            harita: {
+                title: "Harita Bilgisi Testi",
+                questions: [
+                    {
+                        question: "1/1.000.000 ölçekli bir haritada 5 cm kaç km'yi gösterir?",
+                        options: ["5 km", "10 km", "50 km", "100 km"],
+                        correct: 2
+                    },
+                    {
+                        question: "Aşağıdakilerden hangisi fiziki haritalarda gösterilmez?",
+                        options: ["Dağlar", "Akarsular", "İl sınırları", "Göller"],
+                        correct: 2
+                    },
+                    {
+                        question: "İzohips eğrileri için aşağıdakilerden hangisi yanlıştır?",
+                        options: ["Birbirini kesmezler", "Sık oldukları yerler eğimlidir", "En geniş halka doruk noktasıdır", "İç içe kapalı eğrilerdir"],
+                        correct: 2
+                    }
+                    // Daha fazla soru eklenebilir
+                ]
+            },
+            iklim: {
+                title: "İklimler Testi",
+                questions: [
+                    {
+                        question: "Akdeniz iklimi için aşağıdakilerden hangisi doğrudur?",
+                        options: ["Yazları sıcak ve kurak, kışları ılık ve yağışlı", "Her mevsim yağışlı", "Kışları çok soğuk", "Yazları serin"],
+                        correct: 0
+                    }
+                ]
+            },
+            turkiye: {
+                title: "Türkiye Coğrafyası Testi",
+                questions: [
+                    {
+                        question: "Türkiye'nin en yüksek dağı hangisidir?",
+                        options: ["Erciyes", "Ağrı", "Süphan", "Cilo"],
+                        correct: 1
+                    }
+                ]
+            },
+            dunya: {
+                title: "Dünya Coğrafyası Testi",
+                questions: [
+                    {
+                        question: "Dünyanın en büyük kıtası hangisidir?",
+                        options: ["Afrika", "Asya", "Kuzey Amerika", "Avrupa"],
+                        correct: 1
+                    }
+                ]
+            }
+        };
+
+        let currentTopic = '';
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let userAnswers = [];
+        let selectedTopicCard = null;
+
+        function selectTopic(topic) {
+            currentTopic = topic;
+            
+            // Önceki seçimi kaldır
+            if (selectedTopicCard) {
+                selectedTopicCard.classList.remove('selected');
+            }
+            
+            // Yeni seçimi işaretle
+            selectedTopicCard = event.currentTarget;
+            selectedTopicCard.classList.add('selected');
+            
+            // Başla butonunu aktif et
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        function startQuiz() {
+            if (!currentTopic) return;
+            
+            currentQuestions = quizData[currentTopic].questions;
+            userAnswers = new Array(currentQuestions.length).fill(null);
+            currentIndex = 0;
+            
+            document.getElementById('topicSelection').style.display = 'none';
+            document.getElementById('quizArea').style.display = 'block';
+            document.getElementById('topicTitle').textContent = quizData[currentTopic].title;
+            document.getElementById('totalQuestions').textContent = currentQuestions.length;
+            
+            showQuestion();
+            updateButtons();
+        }
+
+        function showQuestion() {
+            const question = currentQuestions[currentIndex];
+            const questionBox = document.getElementById('questionBox');
+            
+            let optionsHtml = '<div class="options">';
+            question.options.forEach((option, index) => {
+                const checked = userAnswers[currentIndex] === index ? 'checked' : '';
+                optionsHtml += `
+                    <label class="option ${checked ? 'selected' : ''}">
+                        <input type="radio" name="question" value="${index}" ${checked} onchange="saveAnswer(${index})">
+                        ${option}
+                    </label>
+                `;
+            });
+            optionsHtml += '</div>';
+            
+            questionBox.innerHTML = `
+                <div class="question">${currentIndex + 1}. ${question.question}</div>
+                ${optionsHtml}
+            `;
+            
+            document.getElementById('currentQuestion').textContent = currentIndex + 1;
+            document.getElementById('progressBar').style.width = 
+                `${((currentIndex + 1) / currentQuestions.length) * 100}%`;
+        }
+
+        function saveAnswer(answerIndex) {
+            userAnswers[currentIndex] = answerIndex;
+            
+            // Seçili opsiyonu görsel olarak işaretle
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.target.closest('.option').classList.add('selected');
+            
+            updateButtons();
+        }
+
+        function nextQuestion() {
+            if (currentIndex < currentQuestions.length - 1) {
+                currentIndex++;
+                showQuestion();
+                updateButtons();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                showQuestion();
+                updateButtons();
+            }
+        }
+
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            
+            const isLastQuestion = currentIndex === currentQuestions.length - 1;
+            document.getElementById('nextBtn').style.display = isLastQuestion ? 'none' : 'inline-block';
+            document.getElementById('submitBtn').style.display = isLastQuestion ? 'inline-block' : 'none';
+            
+            // Tüm sorular cevaplandı mı kontrol et
+            const allAnswered = userAnswers.every(answer => answer !== null);
+            if (isLastQuestion && allAnswered) {
+                document.getElementById('submitBtn').disabled = false;
+            }
+        }
+
+        function submitQuiz() {
+            let correctCount = 0;
+            currentQuestions.forEach((question, index) => {
+                if (userAnswers[index] === question.correct) {
+                    correctCount++;
+                }
+            });
+            
+            const percentage = Math.round((correctCount / currentQuestions.length) * 100);
+            
+            document.getElementById('quizArea').style.display = 'none';
+            
+            const resultArea = document.getElementById('resultArea');
+            resultArea.style.display = 'block';
+            resultArea.innerHTML = `
+                <div class="result-box">
+                    <h2>🎉 Test Tamamlandı!</h2>
+                    <div class="score">${correctCount}/${currentQuestions.length}</div>
+                    <p>Başarı Oranın: %${percentage}</p>
+                    <div style="margin-top: 2rem;">
+                        ${getResultMessage(percentage)}
+                    </div>
+                    <button class="quiz-btn next" onclick="location.reload()" style="margin-top: 2rem;">
+                        Yeni Test Çöz
+                    </button>
+                </div>
+            `;
+        }
+
+        function getResultMessage(percentage) {
+            if (percentage >= 90) return "🌟 Mükemmel! Coğrafya dehası!";
+            if (percentage >= 70) return "📚 Çok iyi! Biraz daha çalışırsan harika olacak!";
+            if (percentage >= 50) return "📖 İyi! Tekrar etmen faydalı olacak!";
+            return "💪 Biraz daha çalışmalısın! Başarabilirsin!";
+        }
+    </script>
+</body>
+</html>
