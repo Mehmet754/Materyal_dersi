@@ -460,7 +460,7 @@
         }).addTo(harita);
 
         // JSON dosyasını yükle
-        fetch('Il.json')
+        fetch('il.json')
             .then(response => {
                 if (!response.ok) throw new Error('il.json bulunamadı');
                 return response.json();
@@ -940,5 +940,4 @@ function ilGoster(plaka, il, layer) {
     });
 </script>
 </body>
-
 </html>
