@@ -210,7 +210,6 @@
             color: #3498db;
             margin: 0.5rem 0;
         }
-        
         .il-listesi {
             background: white;
             padding: 2rem;
@@ -414,7 +413,7 @@
     <footer>
     <div class="container">
         <p>Coğrafya öğretiminde materyaller dersi kapsamında hazırlanmıştır</p>
-        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Sürüm: V2.1 | Veri kaynağı: ArcMap CBS | Nüfus: 2025 TÜİK</p>
+        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Sürüm: V3.1 | Veri kaynağı: ArcMap CBS | Nüfus: 2025 TÜİK</p>
         <p style="font-size: 0.8rem; margin-top: 0.5rem;">
             <a href="index.html" style="color: white; text-decoration: none; opacity: 0.8;">← Ana Sayfaya Dön</a>
         </p>
@@ -436,20 +435,57 @@
     // ========== DEĞİŞKENLER ==========
     let harita, geoJsonLayer, aktifTema = 'nufus';
     let ilVerileri = {}; // JSON'dan okunacak
-
-    // ========== RENK SKALASI ==========
-    function renkSkalasi(deger) {
-        const r = Math.floor(247 - (247 - 8) * deger);
-        const g = Math.floor(251 - (251 - 48) * deger);
-        const b = Math.floor(255 - (255 - 107) * deger);
-        return `rgb(${r}, ${g}, ${b})`;
+    
+// ========== RENK SKALASI (Nüfus Sayısına Göre 6 Aşamalı) ==========
+function renkSkalasi(nufus) {
+    // nufus: İl nüfusu (gerçek sayı)
+    // 6 aşamalı renk geçişi - nüfus aralıklarına göre
+    
+    let r, g, b;
+    
+    if (nufus < 100000) {
+        // Aşama 1: 0 - 100.000 → Açık Sarı (#FFFACD)
+        r = 255;
+        g = 250;
+        b = 205;
+    } else if (nufus < 500000) {
+        // Aşama 2: 100.000 - 500.000 → Sarı (#FFD700)
+        r = 255;
+        g = 215;
+        b = 0;
+    } else if (nufus < 2000000) {
+        // Aşama 3: 500.000 - 2.000.000 → Turuncu (#FFA500)
+        r = 255;
+        g = 165;
+        b = 0;
+    } else if (nufus < 3000000) {
+        // Aşama 4: 2.000.000 - 3.000.000 → Kırmızı-Turuncu (#FF4500)
+        r = 255;
+        g = 69;
+        b = 0;
+    } else if (nufus < 5000000) {
+        // Aşama 5: 3.000.000 - 5.000.000 → Kırmızı (#DC143C)
+        r = 220;
+        g = 20;
+        b = 60;
+    } else {
+        // Aşama 6: 5.000.000 - 16.000.000 → Bordo (#8B0000)
+        r = 139;
+        g = 0;
+        b = 0;
     }
-
+    
+    return `rgb(${r}, ${g}, ${b})`;
+}
     // ========== SAYFA YÜKLENDİĞİNDE ==========
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('🚀 Sayfa yüklendi - ArcMap JSON okunuyor...');
-        haritayiBaslat();
-    });
+    // Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Sayfa yüklendi');
+    haritayiBaslat();
+    tabloyuDoldur();
+    istatistikleriGuncelle();
+    enKalabalikIlleriGoster(); // YENİ EKLENEN SATIR
+});
 
     // ========== HARİTAYI BAŞLAT ==========
     function haritayiBaslat() {
@@ -588,66 +624,74 @@ function turkiyeGenelineDon() {
     }
 }
 
-    // ========== JSON'DAN İL VERİLERİNİ OKU ==========
-    function jsonDanIlVerileriniOku(veri) {
-        const iller = {};
-        
-        if (!veri.features || !Array.isArray(veri.features)) {
-            console.error('JSON formatı hatalı: features dizisi bulunamadı');
-            return iller;
-        }
-        
-        veri.features.forEach((feature, index) => {
-            const props = feature.properties || {};
-            
-            // Plaka kodunu al
-            let plakaKodu = null;
-            if (props["Plaka"]) {
-                plakaKodu = props["Plaka"].toString().padStart(2, '0');
-            }
-            
-            if (!plakaKodu) {
-                console.warn(`${index}. özellikte plaka kodu yok:`, props);
-                return;
-            }
-            
-            // Nüfus verisini al
-            let nufus = 0;
-            if (props["Nüfus"]) {
-                nufus = parseInt(props["Nüfus"]);
-                if (isNaN(nufus)) nufus = 0;
-            }
-            
-            // "AD" sütunundan il adını al
-            let ilAdi = `İl-${plakaKodu}`; // Varsayılan
-            if (props["AD"]) {
-                ilAdi = props["AD"].toString().trim();
-            }
-            
-            // Yüzölçümü (eğer varsa)
-            let yuzolcumu = 10000; // Varsayılan
-            if (props["Yüzölçümü"] || props["yuzolcumu"] || props["area"] || props["Alan"]) {
-                yuzolcumu = parseFloat(props["Yüzölçümü"] || props["yuzolcumu"] || props["area"] || props["Alan"]);
-                if (isNaN(yuzolcumu)) yuzolcumu = 10000;
-            }
-            
-            // Bölge (eğer varsa)
-            let bolge = "Diğer";
-            if (props["Bölge"] || props["bolge"] || props["region"] || props["Bolge"]) {
-                bolge = props["Bölge"] || props["bolge"] || props["region"] || props["Bolge"];
-            }
-            
-            // Veriyi kaydet
-            iller[plakaKodu] = {
-                il: ilAdi,
-                nufus: nufus,
-                yuzolcumu: yuzolcumu,
-                bolge: bolge
-            };
-        });
-        
+// ========== JSON'DAN İL VERİLERİNİ OKU ==========
+function jsonDanIlVerileriniOku(veri) {
+    const iller = {};
+    
+    if (!veri.features || !Array.isArray(veri.features)) {
+        console.error('JSON formatı hatalı: features dizisi bulunamadı');
         return iller;
     }
+    
+    veri.features.forEach((feature, index) => {
+        const props = feature.properties || {};
+        
+        // "Plaka" sütunundan plaka kodunu al
+        let plakaKodu = null;
+        if (props["Plaka"]) {
+            plakaKodu = props["Plaka"].toString().padStart(2, '0');
+        }
+        
+        if (!plakaKodu) {
+            console.warn(`${index}. özellikte plaka kodu yok:`, props);
+            return;
+        }
+        
+        // "Nüfus" sütunundan nüfus verisini al
+        let nufus = 0;
+        if (props["Nüfus"]) {
+            nufus = parseInt(props["Nüfus"]);
+            if (isNaN(nufus)) nufus = 0;
+        }
+        
+        // "AD" sütunundan il adını al
+        let ilAdi = `İl-${plakaKodu}`; // Varsayılan
+        if (props["AD"]) {
+            ilAdi = props["AD"].toString().trim();
+        }
+        
+        // "Yüz" sütunundan yüzölçümü verisini al
+        let yuzolcumu = 0;
+        if (props["Yüz"]) {
+            yuzolcumu = parseFloat(props["Yüz"]);
+            if (isNaN(yuzolcumu)) yuzolcumu = 0;
+        }
+        
+        // "Bölge" sütunundan bölge bilgisini al
+        let bolge = "Diğer";
+        if (props["Bölge"]) {
+            bolge = props["Bölge"].toString().trim();
+        }
+        
+        // Veriyi kaydet
+        iller[plakaKodu] = {
+            il: ilAdi,
+            nufus: nufus,
+            yuzolcumu: yuzolcumu,
+            bolge: bolge
+        };
+    });
+    
+console.log("📊 JSON'dan okunan il sayısı:", Object.keys(iller).length);
+    
+    // Örnek veriyi göster
+    const ornekPlaka = Object.keys(iller)[0];
+    if (ornekPlaka) {
+        console.log('📌 Örnek il verisi (plaka', ornekPlaka, '):', iller[ornekPlaka]);
+    }
+    
+    return iller;
+}
 
     // ========== İL STİLİ (TEMATİK RENKLENDİRME) ==========
     function ilStili(feature) {
@@ -666,10 +710,8 @@ function turkiyeGenelineDon() {
         if (il && il.nufus > 0) {
             switch(aktifTema) {
                 case 'nufus':
-                    const nufuslar = Object.values(ilVerileri).map(i => i.nufus).filter(n => n > 0);
-                    const maxNufus = Math.max(...nufuslar);
-                    fillColor = renkSkalasi(il.nufus / maxNufus);
-                    break;
+    fillColor = renkSkalasi(il.nufus);
+    break;
                     
                 case 'yogunluk':
                     if (il.yuzolcumu && il.yuzolcumu > 0) {
@@ -793,42 +835,119 @@ function ilGoster(plaka, il, layer) {
         }
     }
 
-    // ========== LEJANTI GÜNCELLE ==========
-    function lejantGuncelle(tema) {
-        const lejantIcerik = document.getElementById('lejant-icerik');
-        let html = '';
+// ========== LEJANTI GÜNCELLE ==========
+function lejantGuncelle(tema) {
+    const lejantIcerik = document.getElementById('lejant-icerik');
+    let html = '';
+    
+    if (tema === 'bolge') {
+        // JSON'dan okunan bölge isimlerine göre dinamik lejant
+        const bolgeler = [...new Set(Object.values(ilVerileri).map(il => il.bolge))];
+        const bolgeRenkleri = {
+            'Marmara': '#e74c3c',
+            'Ege': '#3498db',
+            'Akdeniz': '#f39c12',
+            'İç Anadolu': '#27ae60',
+            'Karadeniz': '#9b59b6',
+            'Doğu Anadolu': '#e67e22',
+            'Güneydoğu Anadolu': '#1abc9c'
+        };
         
-        if (tema === 'bolge') {
-            html = `
-                <div class="renk-item"><div class="renk-kutu" style="background: #e74c3c"></div>Marmara</div>
-                <div class="renk-item"><div class="renk-kutu" style="background: #3498db"></div>Ege</div>
-                <div class="renk-item"><div class="renk-kutu" style="background: #f39c12"></div>Akdeniz</div>
-                <div class="renk-item"><div class="renk-kutu" style="background: #27ae60"></div>İç Anadolu</div>
-                <div class="renk-item"><div class="renk-kutu" style="background: #9b59b6"></div>Karadeniz</div>
-                <div class="renk-item"><div class="renk-kutu" style="background: #e67e22"></div>Doğu Anadolu</div>
-                <div class="renk-item"><div class="renk-kutu" style="background: #1abc9c"></div>Güneydoğu Anadolu</div>
-            `;
-        } else {
-            const basliklar = {
-                'nufus': { dusuk: 'Az Nüfuslu', yuksek: 'Kalabalık' },
-                'yogunluk': { dusuk: 'Seyrek Nüfus', yuksek: 'Yoğun Nüfus' },
-                'yuzolcumu': { dusuk: 'Küçük Yüzölçümü', yuksek: 'Büyük Yüzölçümü' }
-            };
-            
-            html = `
+        html = '';
+        bolgeler.forEach(bolge => {
+            const renk = bolgeRenkleri[bolge] || '#95a5a6';
+            html += `
                 <div class="renk-item">
-                    <div class="renk-kutu" style="background: #f7fbff"></div>
-                    <span>${basliklar[tema].dusuk}</span>
-                </div>
-                <div class="renk-item">
-                    <div class="renk-kutu" style="background: #08306b"></div>
-                    <span>${basliklar[tema].yuksek}</span>
+                    <div class="renk-kutu" style="background: ${renk}"></div>
+                    <span>${bolge}</span>
                 </div>
             `;
-        }
-        
-        lejantIcerik.innerHTML = html;
+        });
+    } else if (tema === 'yogunluk') {
+        html = `
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FFFACD"></div>
+                <span>Aşama 1: 0 - 100.000 (Çok Seyrek)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FFD700"></div>
+                <span>Aşama 2: 100.000 - 500.000 (Seyrek)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FFA500"></div>
+                <span>Aşama 3: 500.000 - 2.000.000 (Orta)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FF4500"></div>
+                <span>Aşama 4: 2.000.000 - 3.000.000 (Yoğun)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #DC143C"></div>
+                <span>Aşama 5: 3.000.000 - 5.000.000 (Çok Yoğun)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #8B0000"></div>
+                <span>Aşama 6: 5.000.000 - 16.000.000 (Megakent)</span>
+            </div>
+        `;
+    } else if (tema === 'nufus') {
+        html = `
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FFFACD"></div>
+                <span>Aşama 1: 0 - 100.000 (Çok Küçük)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FFD700"></div>
+                <span>Aşama 2: 100.000 - 500.000 (Küçük)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FFA500"></div>
+                <span>Aşama 3: 500.000 - 2.000.000 (Orta)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FF4500"></div>
+                <span>Aşama 4: 2.000.000 - 3.000.000 (Büyük)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #DC143C"></div>
+                <span>Aşama 5: 3.000.000 - 5.000.000 (Çok Büyük)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #8B0000"></div>
+                <span>Aşama 6: 5.000.000 - 16.000.000 (Metropol)</span>
+            </div>
+        `;
+    } else if (tema === 'yuzolcumu') {
+        html = `
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FFFACD"></div>
+                <span>Küçük Yüzölçümü (0-5000 km²)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FFD700"></div>
+                <span>Orta Küçük (5000-10000 km²)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FFA500"></div>
+                <span>Orta (10000-15000 km²)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #FF4500"></div>
+                <span>Orta Büyük (15000-20000 km²)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #DC143C"></div>
+                <span>Büyük (20000-30000 km²)</span>
+            </div>
+            <div class="renk-item">
+                <div class="renk-kutu" style="background: #8B0000"></div>
+                <span>Çok Büyük (30000+ km²)</span>
+            </div>
+        `;
     }
+    
+    lejantIcerik.innerHTML = html;
+}
 
     // ========== TABLOYU DOLDUR ==========
     function tabloyuDoldur() {
@@ -875,12 +994,75 @@ function ilGoster(plaka, il, layer) {
             tbody.appendChild(row);
         });
     }
+    // ========== EN KALABALIK 5 İLİ GÖSTER ==========
+function enKalabalikIlleriGoster() {
+    const container = document.getElementById('enKalabalikContainer');
+    
+    // İlleri nüfusa göre sırala (büyükten küçüğe)
+    const siraliIller = Object.keys(ilVerileri)
+        .map(plaka => ({
+            plaka: plaka,
+            il: ilVerileri[plaka].il,
+            nufus: ilVerileri[plaka].nufus
+        }))
+        .sort((a, b) => b.nufus - a.nufus)
+        .slice(0, 5); // İlk 5 ili al
+    
+    // Her il için kart oluştur
+    container.innerHTML = '';
+    
+    siraliIller.forEach((il, index) => {
+        const sira = index + 1;
+        const kart = document.createElement('div');
+        kart.className = `kalabalik-kart sira-${sira}`;
+        kart.setAttribute('data-plaka', il.plaka);
+        
+        // Nüfusu milyon olarak formatla
+        let nufusGosterim = '';
+        if (il.nufus >= 1000000) {
+            nufusGosterim = `${(il.nufus / 1000000).toFixed(1)} Milyon`;
+        } else {
+            nufusGosterim = `${(il.nufus / 1000).toFixed(0)} Bin`;
+        }
+        
+        kart.innerHTML = `
+            <div class="kalabalik-sira">#${sira}</div>
+            <div class="kalabalik-il">🏙️ ${il.il}</div>
+            <div class="kalabalik-nufus">📊 ${nufusGosterim}</div>
+            <div class="kalabalik-plaka">Plaka: ${il.plaka}</div>
+        `;
+        
+        // Karta tıklayınca o ile git
+        kart.addEventListener('click', function() {
+            const plaka = this.getAttribute('data-plaka');
+            if (geoJsonLayer) {
+                geoJsonLayer.eachLayer(function(layer) {
+                    let layerPlaka = null;
+                    if (layer.feature.properties && layer.feature.properties["Plaka"]) {
+                        layerPlaka = layer.feature.properties["Plaka"].toString().padStart(2, '0');
+                    }
+                    if (layerPlaka === plaka) {
+                        const il = ilVerileri[plaka];
+                        ilGoster(plaka, il, layer);
+                        harita.fitBounds(layer.getBounds());
+                        
+                        // Layer'ı geçici olarak vurgula
+                        layer.setStyle({ weight: 3, color: '#333', fillOpacity: 0.9 });
+                        setTimeout(() => geoJsonLayer.resetStyle(layer), 1000);
+                    }
+                });
+            }
+        });
+        
+        container.appendChild(kart);
+    });
+}
 
     // ========== İSTATİSTİKLERİ GÜNCELLE ==========
     function istatistikleriGuncelle() {
         const nufuslar = Object.values(ilVerileri).map(i => i.nufus).filter(n => n > 0);
         const toplamNufus = nufuslar.reduce((t, i) => t + i, 0);
-        
+
         // En kalabalık ili bul
         let enKalabalik = { il: '', nufus: 0 };
         Object.values(ilVerileri).forEach(il => {
