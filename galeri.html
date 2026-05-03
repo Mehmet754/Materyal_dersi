@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harita Galerisi | Türkiye CBS Veri Portalı</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Galeri Sayfası Özel Stilleri */
+        .galeri-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+        
+        .galeri-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .galeri-header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .galeri-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        /* Filtreleme Butonları */
+        .filtreleme {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .filtre-btn {
+            padding: 0.6rem 1.5rem;
+            border: none;
+            border-radius: 30px;
+            background: #ecf0f1;
+            color: #2c3e50;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .filtre-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+        
+        .filtre-btn.active {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        /* Galeri Izgara */
+        .galeri-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+        
+        /* Harita Kartı */
+        .harita-kart {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        
+        .harita-kart:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        .harita-resim {
+            width: 100%;
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .harita-kategori {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .harita-bilgi {
+            padding: 1.5rem;
+        }
+        
+        .harita-baslik {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .harita-aciklama {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        
+        .harita-detay {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .harita-tarih {
+            font-size: 0.8rem;
+            color: #999;
+        }
+        
+        .harita-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s;
+        }
+        
+        .harita-btn:hover {
+            background: #2980b9;
+        }
+        
+        /* Lightbox (Büyük görünüm) */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .lightbox.active {
+            display: flex;
+        }
+        
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+        }
+        
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+        }
+        
+        .lightbox-caption {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 1rem;
+            margin: 0 20px;
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .galeri-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .lightbox-close {
+                top: 10px;
+                right: 20px;
+                font-size: 30px;
+            }
+        }
+        
+        /* Boş Durum Mesajı */
+        .bos-mesaj {
+            text-align: center;
+            padding: 4rem;
+            background: #f8f9fa;
+            border-radius: 15px;
+            color: #666;
+        }
+        
+        .bos-mesaj h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <h1>🌍 Türkiye CBS Veri Portalı</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Ana Sayfa</a></li>
+                <li><a href="portal.html">Tematik Harita</a></li>
+                <li><a href="galeri.html" class="active">Harita Galerisi</a></li>
+                <li><a href="testler.html">Testler</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="galeri-container">
+            <div class="galeri-header">
+                <h1>🗺️ Harita Galerisi</h1>
+                <p>Hazırladığım coğrafi haritalar - Türkiye'nin farklı tematik haritaları</p>
+            </div>
+            
+            <!-- Filtreleme Butonları -->
+            <div class="filtreleme">
+                <button class="filtre-btn active" data-kategori="tum">Tümü</button>
+                <button class="filtre-btn" data-kategori="nufus">Nüfus Haritaları</button>
+                <button class="filtre-btn" data-kategori="iklim">İklim Haritaları</button>
+                <button class="filtre-btn" data-kategori="fiziki">Fiziki Haritalar</button>
+                <button class="filtre-btn" data-kategori="tarihi">Tarihi Haritalar</button>
+            </div>
+            
+            <!-- Galeri Izgarası -->
+            <div class="galeri-grid" id="galeriGrid">
+                <!-- Haritalar JavaScript ile doldurulacak -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightboxImg" src="" alt="">
+        <div id="lightboxCaption" class="lightbox-caption"></div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>Coğrafya öğretiminde materyaller dersi kapsamında hazırlanmıştır</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Sürüm: V02 | Veri kaynağı: ArcMap CBS | Nüfus: 2025 TÜİK</p>
+        </div>
+    </footer>
+
+    <script>
+        // ========== HARİTA GALERİSİ VERİLERİ ==========
+        // Buraya kendi haritalarını ekleyeceksin!
+        const haritalar = [
+    {
+        id: 1,
+        baslik: "Türkiye Nüfus Yoğunluğu Haritası (2025)",
+        aciklama: "Türkiye geneli il bazında nüfus yoğunluğu dağılımı...",
+        kategori: "nufus",
+        resim: "images/haritalar/nufus-haritasi.jpg",  // ← BURAYA DİKKAT!
+        tarih: "2025"
+    },
+    {
+        id: 2,
+        baslik: "Türkiye İklim Tipleri Haritası",
+        aciklama: "Akdeniz, Karadeniz, Karasal ve diğer iklim tipleri...",
+        kategori: "iklim",
+        resim: "images/haritalar/türkiye_iklim_tipleri.jpg",  // ← DOĞRU YOL
+        tarih: "2024"
+    },
+    {
+        id: 3,
+        baslik: "Türkiye Bitki Örtüsü Haritası",
+        aciklama: "Türkiye geneli bitki örtüsü dağılımı haritası...",
+        kategori: "fiziki",
+        resim: "images/haritalar/türkiye_bitki_örtüsü.jpg",  // ← DOĞRU YOL
+        tarih: "2024"
+    },
+    {
+        id: 4,
+        baslik: "Türkiye Toprak Tipleri Haritası",
+        aciklama: "Türkiye geneli toprak tüpleri dağılımı haritası...",
+        kategori: "fiziki",
+        resim: "images/haritalar/türkiye_toprak_tipleri.jpg",  // ← DOĞRU YOL
+        tarih: "2024"
+    },
+    {
+        id: 5,
+        baslik: "Türkiye Tektonik Haritası",
+        aciklama: "Türkiye geneli tektonizma haritası...",
+        kategori: "fiziki",
+        resim: "images/haritalar/türkiye_tektonik.jpg",  // ← DOĞRU YOL
+        tarih: "2024"
+    },
+    {
+        id: 6,
+        baslik: "Türkiye Büyükşehir Belediyesine Sahip İller Haritası",
+        aciklama: "Türkiye büyükşehir belediyesine sahip iller haritası...",
+        kategori: "nufus",
+        resim: "images/haritalar/türkiye_büyük_şehir.jpg",  // ← DOĞRU YOL
+        tarih: "2024"
+    },
+    {
+        id: 7,
+        baslik: "Türkiye Dağlık Bölgeler Haritası",
+        aciklama: "Türkiye dağlık bölgeler haritası...",
+        kategori: "fiziki",
+        resim: "images/haritalar/türkiye_dağlık_bölgeler.jpg",  // ← DOĞRU YOL
+        tarih: "2024"
+    },
+    {
+        id: 8,
+        baslik: "Türkiye Ovalık Bölgeler Haritası",
+        aciklama: "Türkiye ovalık bölgeleri haritası...",
+        kategori: "fiziki",
+        resim: "images/haritalar/türkiye_ovalık_bölgeler.jpg",  // ← DOĞRU YOL
+        tarih: "2024"
+    },
+    {
+        id: 9,
+        baslik: "Türkiye Platoluk Bölgeler Haritası",
+        aciklama: "Türkiye platoluk bölgeleri haritası...",
+        kategori: "fiziki",
+        resim: "images/haritalar/türkiye_platoluk_bölgeler.jpg",  // ← DOĞRU YOL
+        tarih: "2024"
+    },
+    {
+        id: 10,
+        baslik: "Türkiye Akarsu ve GöllerHaritası",
+        aciklama: "Türkiye akarsu ve göller haritası...",
+        kategori: "fiziki",
+        resim: "images/haritalar/türkiye_su_kaynakları.jpg",  // ← DOĞRU YOL
+        tarih: "2024"
+    },
+
+    // Diğer haritalar...
+];
+        // ========== GALERİYİ OLUŞTUR ==========
+        let aktifKategori = 'tum';
+
+        function galeriyiOlustur() {
+            const grid = document.getElementById('galeriGrid');
+            
+            // Filtreleme
+            let filtrelenmisHaritalar = haritalar;
+            if (aktifKategori !== 'tum') {
+                filtrelenmisHaritalar = haritalar.filter(h => h.kategori === aktifKategori);
+            }
+            
+            if (filtrelenmisHaritalar.length === 0) {
+                grid.innerHTML = `
+                    <div class="bos-mesaj">
+                        <h3>📭 Henüz harita eklenmemiş</h3>
+                        <p>Bu kategoride henüz harita bulunmuyor.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Kartları oluştur
+            grid.innerHTML = filtrelenmisHaritalar.map(harita => `
+                <div class="harita-kart" data-kategori="${harita.kategori}" data-id="${harita.id}">
+                    <div class="harita-resim" style="background-image: url('${harita.resim}')">
+                        <span class="harita-kategori">${getKategoriAdi(harita.kategori)}</span>
+                    </div>
+                    <div class="harita-bilgi">
+                        <div class="harita-baslik">${harita.baslik}</div>
+                        <div class="harita-aciklama">${harita.aciklama}</div>
+                        <div class="harita-detay">
+                            <span class="harita-tarih">📅 ${harita.tarih}</span>
+                            <button class="harita-btn" onclick="haritayiGoster(${harita.id})">🔍 İncele</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getKategoriAdi(kategori) {
+            const kategoriMap = {
+                'nufus': '📊 Nüfus',
+                'iklim': '🌤️ İklim',
+                'fiziki': '⛰️ Fiziki',
+                'tarihi': '📜 Tarihi'
+            };
+            return kategoriMap[kategori] || kategori;
+        }
+
+        // ========== HARİTA GÖSTER (Lightbox) ==========
+        function haritayiGoster(id) {
+            const harita = haritalar.find(h => h.id === id);
+            if (harita) {
+                const lightbox = document.getElementById('lightbox');
+                const img = document.getElementById('lightboxImg');
+                const caption = document.getElementById('lightboxCaption');
+                
+                img.src = harita.resim;
+                caption.innerHTML = `<strong>${harita.baslik}</strong><br>${harita.aciklama}`;
+                lightbox.classList.add('active');
+            }
+        }
+
+        // Lightbox kapatma
+        document.getElementById('lightbox').addEventListener('click', function(e) {
+            if (e.target === this || e.target.classList.contains('lightbox-close')) {
+                this.classList.remove('active');
+            }
+        });
+
+        // ESC tuşu ile kapatma
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.getElementById('lightbox').classList.remove('active');
+            }
+        });
+
+        // Filtreleme butonları
+        document.querySelectorAll('.filtre-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                aktifKategori = this.getAttribute('data-kategori');
+                galeriyiOlustur();
+            });
+        });
+
+        // Sayfa yüklendiğinde galeriyi oluştur
+        document.addEventListener('DOMContentLoaded', function() {
+            galeriyiOlustur();
+            console.log('🗺️ Harita Galerisi hazır!');
+        });
+    </script>
+</body>
+</html>

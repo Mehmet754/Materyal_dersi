@@ -317,6 +317,7 @@
             <h1>🌍 Türkiye CBS Veri Portalı</h1>
         </div>
         <ul class="nav-menu">
+            <li><a href="galeri.html">Harita Galerisi</a></li>
             <li><a href="index.html">Ana Sayfa</a></li>
             <li><a href="portal.html" class="active">Tematik Harita</a></li>
             <li><a href="testler.html">Testler</a></li>
@@ -332,11 +333,12 @@
             </div>
             
             <div class="tema-kontrol">
-                <button class="tema-btn active" onclick="temaDegistir('nufus')">👥 Nüfus</button>
-                <button class="tema-btn" onclick="temaDegistir('yogunluk')">📊 Nüfus Yoğunluğu</button>
-                <button class="tema-btn" onclick="temaDegistir('yuzolcumu')">🗺️ Yüzölçümü</button>
-                <button class="tema-btn" onclick="temaDegistir('bolge')">📍 Bölgeler</button>
-            </div>
+    <button class="tema-btn active" onclick="temaDegistir('nufus')">👥 Nüfus</button>
+    <button class="tema-btn" onclick="temaDegistir('yogunluk')">📊 Nüfus Yoğunluğu</button>
+    <button class="tema-btn" onclick="temaDegistir('yuzolcumu')">🗺️ Yüzölçümü</button>
+    <button class="tema-btn" onclick="temaDegistir('bolge')">📍 Bölgeler</button>
+    <button class="tema-btn" onclick="temaDegistir('idari')">🏛️ İdari Bölünüş</button>  <!-- YENİ BUTON -->
+</div>
             
             <div class="harita-konteynir">
                 <div id="harita"></div>
@@ -413,7 +415,7 @@
     <footer>
     <div class="container">
         <p>Coğrafya öğretiminde materyaller dersi kapsamında hazırlanmıştır</p>
-        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Sürüm: V3.1 | Veri kaynağı: ArcMap CBS | Nüfus: 2025 TÜİK</p>
+        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Sürüm: <V4 class="2">V4.2</V4> | Veri kaynağı: ArcMap CBS | Nüfus: 2025 TÜİK</p>
         <p style="font-size: 0.8rem; margin-top: 0.5rem;">
             <a href="index.html" style="color: white; text-decoration: none; opacity: 0.8;">← Ana Sayfaya Dön</a>
         </p>
@@ -474,7 +476,56 @@ function renkSkalasi(nufus) {
         g = 0;
         b = 0;
     }
+    // ========== NÜFUS YOĞUNLUĞUNA GÖRE RENK SKALASI ==========
+function yogunlukRenkSkalasi(yogunluk) {
+    // yogunluk: kişi/km² cinsinden nüfus yoğunluğu
+    // Aralıklar: 0-50, 50-100, 100-200, 200-300, 300-700, 700-3000
     
+    if (yogunluk < 50) {
+        // Aşama 1: 0-50 → Açık Sarı (#FFFACD)
+        return 'rgb(255, 250, 205)';
+    } else if (yogunluk < 100) {
+        // Aşama 2: 50-100 → Sarı (#FFD700)
+        return 'rgb(255, 215, 0)';
+    } else if (yogunluk < 200) {
+        // Aşama 3: 100-200 → Turuncu (#FFA500)
+        return 'rgb(255, 165, 0)';
+    } else if (yogunluk < 300) {
+        // Aşama 4: 200-300 → Kırmızı-Turuncu (#FF4500)
+        return 'rgb(255, 69, 0)';
+    } else if (yogunluk < 700) {
+        // Aşama 5: 300-700 → Kırmızı (#DC143C)
+        return 'rgb(220, 20, 60)';
+    } else {
+        // Aşama 6: 700-3000 → Bordo (#8B0000)
+        return 'rgb(139, 0, 0)';
+    }
+}
+    // ========== YÜZÖLÇÜMÜNE GÖRE RENK SKALASI ==========
+function yuzolcumuRenkSkalasi(yuzolcumu) {
+    // yuzolcumu: km² cinsinden il yüzölçümü
+    // Aralıklar: 0-5000, 5000-10000, 10000-15000, 15000-20000, 20000-30000, 30000-40000
+    
+    if (yuzolcumu < 5000) {
+        // Aşama 1: 0-5000 → Açık Sarı (#FFFACD)
+        return 'rgb(255, 250, 205)';
+    } else if (yuzolcumu < 10000) {
+        // Aşama 2: 5000-10000 → Sarı (#FFD700)
+        return 'rgb(255, 215, 0)';
+    } else if (yuzolcumu < 15000) {
+        // Aşama 3: 10000-15000 → Turuncu (#FFA500)
+        return 'rgb(255, 165, 0)';
+    } else if (yuzolcumu < 20000) {
+        // Aşama 4: 15000-20000 → Kırmızı-Turuncu (#FF4500)
+        return 'rgb(255, 69, 0)';
+    } else if (yuzolcumu < 30000) {
+        // Aşama 5: 20000-30000 → Kırmızı (#DC143C)
+        return 'rgb(220, 20, 60)';
+    } else {
+        // Aşama 6: 30000-40000 → Bordo (#8B0000)
+        return 'rgb(139, 0, 0)';
+    }
+}
     return `rgb(${r}, ${g}, ${b})`;
 }
     // ========== SAYFA YÜKLENDİĞİNDE ==========
@@ -693,54 +744,126 @@ console.log("📊 JSON'dan okunan il sayısı:", Object.keys(iller).length);
     return iller;
 }
 
-    // ========== İL STİLİ (TEMATİK RENKLENDİRME) ==========
-    function ilStili(feature) {
-        const props = feature.properties || {};
-        let plakaKodu = null;
-        
-        if (props["Plaka"]) {
-            plakaKodu = props["Plaka"].toString().padStart(2, '0');
-        }
-        
-        const il = plakaKodu ? ilVerileri[plakaKodu] : null;
-        
-        // Varsayılan renk
-        let fillColor = '#cccccc';
-        
-        if (il && il.nufus > 0) {
-            switch(aktifTema) {
-                case 'nufus':
-    fillColor = renkSkalasi(il.nufus);
-    break;
-                    
-                case 'yogunluk':
-                    if (il.yuzolcumu && il.yuzolcumu > 0) {
-                        const yogunluk = il.nufus / il.yuzolcumu;
-                        const maxYogunluk = 2867; // İstanbul referans
-                        fillColor = renkSkalasi(Math.min(yogunluk / maxYogunluk, 1));
-                    }
-                    break;
-                    
-                case 'yuzolcumu':
-                    const yuzolcumleri = Object.values(ilVerileri).map(i => i.yuzolcumu).filter(y => y > 0);
-                    const maxYuzolcumu = Math.max(...yuzolcumleri);
-                    fillColor = renkSkalasi(il.yuzolcumu / maxYuzolcumu);
-                    break;
-                    
-                case 'bolge':
-                    fillColor = bolgeRenkleri[il.bolge] || '#95a5a6';
-                    break;
-            }
-        }
-        
-        return {
-            fillColor: fillColor,
-            weight: 1,
-            color: 'white',
-            fillOpacity: 0.8
-        };
+// ========== İL STİLİ (TEMATİK RENKLENDİRME) ==========
+function ilStili(feature) {
+    const props = feature.properties || {};
+    let plakaKodu = null;
+    
+    // "Plaka" sütunundan plaka kodunu al
+    if (props["Plaka"]) {
+        plakaKodu = props["Plaka"].toString().padStart(2, '0');
     }
-
+    
+    // İl verilerini bul
+    const il = plakaKodu ? ilVerileri[plakaKodu] : null;
+    
+    // Varsayılan renk (gri)
+    let fillColor = '#cccccc';
+    
+    // Eğer il verisi varsa ve nüfus 0'dan büyükse
+    if (il && il.nufus > 0) {
+        
+        // SEÇİLEN TEMAYA GÖRE RENKLENDİR
+        switch(aktifTema) {
+            
+            // ========== NÜFUS TEMASI ==========
+            case 'nufus':
+                if (il.nufus < 100000) {
+                    fillColor = '#FFFACD';      // Açık Sarı (0-100k)
+                } else if (il.nufus < 500000) {
+                    fillColor = '#FFD700';      // Sarı (100k-500k)
+                } else if (il.nufus < 2000000) {
+                    fillColor = '#FFA500';      // Turuncu (500k-2M)
+                } else if (il.nufus < 3000000) {
+                    fillColor = '#FF4500';      // Kırmızı-Turuncu (2M-3M)
+                } else if (il.nufus < 5000000) {
+                    fillColor = '#DC143C';      // Kırmızı (3M-5M)
+                } else {
+                    fillColor = '#8B0000';      // Bordo (5M+)
+                }
+                break;
+            
+            // ========== NÜFUS YOĞUNLUĞU TEMASI ==========
+            case 'yogunluk':
+                if (il.yuzolcumu && il.yuzolcumu > 0) {
+                    const yogunluk = il.nufus / il.yuzolcumu;
+                    if (yogunluk < 50) {
+                        fillColor = '#FFFACD';  // Açık Sarı (0-50)
+                    } else if (yogunluk < 100) {
+                        fillColor = '#FFD700';  // Sarı (50-100)
+                    } else if (yogunluk < 200) {
+                        fillColor = '#FFA500';  // Turuncu (100-200)
+                    } else if (yogunluk < 300) {
+                        fillColor = '#FF4500';  // Kırmızı-Turuncu (200-300)
+                    } else if (yogunluk < 700) {
+                        fillColor = '#DC143C';  // Kırmızı (300-700)
+                    } else {
+                        fillColor = '#8B0000';  // Bordo (700+)
+                    }
+                }
+                break;
+            
+            // ========== YÜZÖLÇÜMÜ TEMASI ==========
+            case 'yuzolcumu':
+                if (il.yuzolcumu && il.yuzolcumu > 0) {
+                    if (il.yuzolcumu < 5000) {
+                        fillColor = '#FFFACD';  // Açık Sarı (0-5k km²)
+                    } else if (il.yuzolcumu < 10000) {
+                        fillColor = '#FFD700';  // Sarı (5k-10k km²)
+                    } else if (il.yuzolcumu < 15000) {
+                        fillColor = '#FFA500';  // Turuncu (10k-15k km²)
+                    } else if (il.yuzolcumu < 20000) {
+                        fillColor = '#FF4500';  // Kırmızı-Turuncu (15k-20k km²)
+                    } else if (il.yuzolcumu < 30000) {
+                        fillColor = '#DC143C';  // Kırmızı (20k-30k km²)
+                    } else {
+                        fillColor = '#8B0000';  // Bordo (30k+ km²)
+                    }
+                }
+                break;
+            
+            // ========== BÖLGE TEMASI ==========
+            case 'bolge':
+                const bolgeRenkleri = {
+                    'Marmara': '#e74c3c',
+                    'Ege': '#3498db',
+                    'Akdeniz': '#f39c12',
+                    'İç Anadolu': '#27ae60',
+                    'Karadeniz': '#9b59b6',
+                    'Doğu Anadolu': '#e67e22',
+                    'Güneydoğu Anadolu': '#1abc9c'
+                };
+                fillColor = bolgeRenkleri[il.bolge] || '#95a5a6';
+                break;
+            
+            // ========== İDARİ BÖLÜNÜŞ TEMASI ==========
+            case 'idari':
+                const plakaNum = parseInt(plakaKodu);
+                if (plakaNum < 20) {
+                    fillColor = '#87CEEB';  // Açık Mavi
+                } else if (plakaNum < 40) {
+                    fillColor = '#4682B4';  // Çelik Mavisi
+                } else if (plakaNum < 60) {
+                    fillColor = '#1E90FF';  // Dodger Mavisi
+                } else if (plakaNum < 80) {
+                    fillColor = '#4169E1';  // Kraliyet Mavisi
+                } else {
+                    fillColor = '#00008B';  // Koyu Mavi
+                }
+                break;
+        }
+    }
+    
+    // Stil objesini döndür
+    return {
+        fillColor: fillColor,
+        weight: 1,
+        opacity: 1,
+        color: 'white',
+        fillOpacity: 0.8,
+        dashArray: null
+    };
+}
     // ========== İL GÖSTER ==========
     function ilGoster(plaka, il, layer) {
         const bilgiKutu = document.getElementById('il-bilgi');
@@ -840,110 +963,95 @@ function lejantGuncelle(tema) {
     const lejantIcerik = document.getElementById('lejant-icerik');
     let html = '';
     
-    if (tema === 'bolge') {
-        // JSON'dan okunan bölge isimlerine göre dinamik lejant
-        const bolgeler = [...new Set(Object.values(ilVerileri).map(il => il.bolge))];
-        const bolgeRenkleri = {
-            'Marmara': '#e74c3c',
-            'Ege': '#3498db',
-            'Akdeniz': '#f39c12',
-            'İç Anadolu': '#27ae60',
-            'Karadeniz': '#9b59b6',
-            'Doğu Anadolu': '#e67e22',
-            'Güneydoğu Anadolu': '#1abc9c'
-        };
+    // SEÇİLEN TEMAYA GÖRE LEJANT OLUŞTUR
+    switch(tema) {
         
-        html = '';
-        bolgeler.forEach(bolge => {
-            const renk = bolgeRenkleri[bolge] || '#95a5a6';
-            html += `
+        // ========== NÜFUS LEJANTI ==========
+        case 'nufus':
+            html = `
+                <div class="renk-item"><div class="renk-kutu" style="background: #FFFACD"></div><span>0 - 100.000 (Çok Küçük)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #FFD700"></div><span>100.000 - 500.000 (Küçük)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #FFA500"></div><span>500.000 - 2.000.000 (Orta)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #FF4500"></div><span>2.000.000 - 3.000.000 (Büyük)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #DC143C"></div><span>3.000.000 - 5.000.000 (Çok Büyük)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #8B0000"></div><span>5.000.000 - 16.000.000 (Metropol)</span></div>
+            `;
+            break;
+        
+        // ========== NÜFUS YOĞUNLUĞU LEJANTI ==========
+        case 'yogunluk':
+            html = `
+                <div class="renk-item"><div class="renk-kutu" style="background: #FFFACD"></div><span>0-50 kişi/km² (Çok Seyrek)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #FFD700"></div><span>50-100 kişi/km² (Seyrek)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #FFA500"></div><span>100-200 kişi/km² (Orta Altı)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #FF4500"></div><span>200-300 kişi/km² (Orta Üstü)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #DC143C"></div><span>300-700 kişi/km² (Yoğun)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #8B0000"></div><span>700-3000 kişi/km² (Çok Yoğun)</span></div>
+            `;
+            break;
+        
+        // ========== YÜZÖLÇÜMÜ LEJANTI ==========
+        case 'yuzolcumu':
+            html = `
+                <div class="renk-item"><div class="renk-kutu" style="background: #FFFACD"></div><span>0-5.000 km² (Çok Küçük)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #FFD700"></div><span>5.000-10.000 km² (Küçük)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #FFA500"></div><span>10.000-15.000 km² (Orta)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #FF4500"></div><span>15.000-20.000 km² (Orta Büyük)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #DC143C"></div><span>20.000-30.000 km² (Büyük)</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #8B0000"></div><span>30.000-40.000 km² (Çok Büyük)</span></div>
+            `;
+            break;
+        
+        // ========== BÖLGE LEJANTI ==========
+        case 'bolge':
+            html = `
+                <div class="renk-item"><div class="renk-kutu" style="background: #e74c3c"></div><span>Marmara Bölgesi</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #3498db"></div><span>Ege Bölgesi</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #f39c12"></div><span>Akdeniz Bölgesi</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #27ae60"></div><span>İç Anadolu Bölgesi</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #9b59b6"></div><span>Karadeniz Bölgesi</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #e67e22"></div><span>Doğu Anadolu Bölgesi</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #1abc9c"></div><span>Güneydoğu Anadolu Bölgesi</span></div>
+            `;
+            break;
+        
+        // ========== İDARİ BÖLÜNÜŞ LEJANTI (YENİ) ==========
+        case 'idari':
+            html = `
                 <div class="renk-item">
-                    <div class="renk-kutu" style="background: ${renk}"></div>
-                    <span>${bolge}</span>
+                    <div class="renk-kutu" style="background: #87CEEB"></div>
+                    <span>Plaka 01-19 (Açık Mavi)</span>
+                </div>
+                <div class="renk-item">
+                    <div class="renk-kutu" style="background: #4682B4"></div>
+                    <span>Plaka 20-39 (Çelik Mavisi)</span>
+                </div>
+                <div class="renk-item">
+                    <div class="renk-kutu" style="background: #1E90FF"></div>
+                    <span>Plaka 40-59 (Dodger Mavisi)</span>
+                </div>
+                <div class="renk-item">
+                    <div class="renk-kutu" style="background: #4169E1"></div>
+                    <span>Plaka 60-79 (Kraliyet Mavisi)</span>
+                </div>
+                <div class="renk-item">
+                    <div class="renk-kutu" style="background: #00008B"></div>
+                    <span>Plaka 80-81 (Koyu Mavi)</span>
+                </div>
+                <div class="renk-item" style="margin-top: 10px;">
+                    <div class="renk-kutu" style="background: none; border: 2px solid #333;"></div>
+                    <span>Toplam 81 İl</span>
                 </div>
             `;
-        });
-    } else if (tema === 'yogunluk') {
-        html = `
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FFFACD"></div>
-                <span>Aşama 1: 0 - 100.000 (Çok Seyrek)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FFD700"></div>
-                <span>Aşama 2: 100.000 - 500.000 (Seyrek)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FFA500"></div>
-                <span>Aşama 3: 500.000 - 2.000.000 (Orta)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FF4500"></div>
-                <span>Aşama 4: 2.000.000 - 3.000.000 (Yoğun)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #DC143C"></div>
-                <span>Aşama 5: 3.000.000 - 5.000.000 (Çok Yoğun)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #8B0000"></div>
-                <span>Aşama 6: 5.000.000 - 16.000.000 (Megakent)</span>
-            </div>
-        `;
-    } else if (tema === 'nufus') {
-        html = `
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FFFACD"></div>
-                <span>Aşama 1: 0 - 100.000 (Çok Küçük)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FFD700"></div>
-                <span>Aşama 2: 100.000 - 500.000 (Küçük)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FFA500"></div>
-                <span>Aşama 3: 500.000 - 2.000.000 (Orta)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FF4500"></div>
-                <span>Aşama 4: 2.000.000 - 3.000.000 (Büyük)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #DC143C"></div>
-                <span>Aşama 5: 3.000.000 - 5.000.000 (Çok Büyük)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #8B0000"></div>
-                <span>Aşama 6: 5.000.000 - 16.000.000 (Metropol)</span>
-            </div>
-        `;
-    } else if (tema === 'yuzolcumu') {
-        html = `
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FFFACD"></div>
-                <span>Küçük Yüzölçümü (0-5000 km²)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FFD700"></div>
-                <span>Orta Küçük (5000-10000 km²)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FFA500"></div>
-                <span>Orta (10000-15000 km²)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #FF4500"></div>
-                <span>Orta Büyük (15000-20000 km²)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #DC143C"></div>
-                <span>Büyük (20000-30000 km²)</span>
-            </div>
-            <div class="renk-item">
-                <div class="renk-kutu" style="background: #8B0000"></div>
-                <span>Çok Büyük (30000+ km²)</span>
-            </div>
-        `;
+            break;
+        
+        // ========== VARSAYILAN (Yedek) ==========
+        default:
+            html = `
+                <div class="renk-item"><div class="renk-kutu" style="background: #FFFACD"></div><span>Düşük</span></div>
+                <div class="renk-item"><div class="renk-kutu" style="background: #8B0000"></div><span>Yüksek</span></div>
+            `;
+            break;
     }
     
     lejantIcerik.innerHTML = html;
