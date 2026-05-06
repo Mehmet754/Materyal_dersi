@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Türkiye İklim Haritası | CBS Portalı</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; }
+        .navbar { background: #2c3e50; color: white; padding: 1rem 0; position: sticky; top: 0; z-index: 1000; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+        .navbar .container { display: flex; justify-content: space-between; align-items: center; }
+        .logo h1 { font-size: 1.5rem; color: white; }
+        .nav-menu { display: flex; list-style: none; gap: 1.5rem; }
+        .nav-menu a { color: white; text-decoration: none; padding: 0.5rem; }
+        .nav-menu a.active { color: #3498db; font-weight: bold; }
+        .iklim-container { max-width: 1400px; margin: 2rem auto; padding: 0 20px; }
+        .iklim-header { text-align: center; margin-bottom: 2rem; }
+        .iklim-header h1 { font-size: 2.5rem; color: #2c3e50; margin-bottom: 0.5rem; }
+        .iklim-header p { color: #666; font-size: 1rem; }
+        .iklim-kontrol { display: flex; gap: 0.8rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap; }
+        .iklim-btn { padding: 0.7rem 1.3rem; border: none; border-radius: 30px; background: #e0e0e0; color: #333; cursor: pointer; font-size: 0.9rem; font-weight: 500; transition: all 0.3s; }
+        .iklim-btn:hover { transform: translateY(-2px); filter: brightness(0.9); }
+        .iklim-btn.aktif { box-shadow: 0 0 0 2px white, 0 0 0 4px #2c3e50; }
+        .harita-konteynir { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; margin-bottom: 2rem; }
+        #harita { height: 600px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); background: #f8f9fa; z-index: 1; }
+        .lejant { background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .lejant h3 { color: #2c3e50; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #3498db; }
+        .renk-skalasi { display: flex; flex-direction: column; gap: 0.8rem; margin: 1rem 0; }
+        .renk-item { display: flex; align-items: center; gap: 0.8rem; }
+        .renk-kutu { width: 40px; height: 25px; border-radius: 5px; }
+        .bilgi-kutu { background: #f8f9fa; padding: 1.2rem; border-radius: 10px; margin-top: 1rem; max-height: 350px; overflow-y: auto; }
+        .bilgi-kutu h4 { color: #2c3e50; margin-bottom: 0.8rem; }
+        .iklim-bilgi-tablo { width: 100%; border-collapse: collapse; }
+        .iklim-bilgi-tablo td { padding: 0.4rem 0; border-bottom: 1px solid #ddd; }
+        .iklim-bilgi-tablo td:first-child { font-weight: bold; color: #555; width: 40%; }
+        .iklim-bilgi-tablo td:last-child { text-align: right; color: #2c3e50; }
+        footer { background: #2c3e50; color: white; text-align: center; padding: 1.2rem 0; margin-top: 2rem; }
+        @media (max-width: 1024px) { .harita-konteynir { grid-template-columns: 1fr; } #harita { height: 400px; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo"><h1>🌍 Türkiye CBS Veri Portalı</h1></div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Ana Sayfa</a></li>
+                <li><a href="portal.html">Tematik Harita</a></li>
+                <li><a href="iklim.html" class="active">🌤️ İklim Haritası</a></li>
+                <li><a href="testler.html">Testler</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="iklim-container">
+            <div class="iklim-header">
+                <h1>🌤️ Türkiye İklim Tipleri Haritası</h1>
+                <p>İllerin iklim sınıflandırması - İklim tipine göre renklendirilmiştir</p>
+            </div>
+
+            <div class="iklim-kontrol">
+                <button class="iklim-btn aktif" data-iklim="hepsi" style="background:#2c3e50; color:white;">🗺️ Tüm İklimler</button>
+                <button class="iklim-btn" data-iklim="Akdeniz İklimi" style="background:#e74c3c; color:white;">🌊 Akdeniz</button>
+                <button class="iklim-btn" data-iklim="Karadeniz İklimi" style="background:#27ae60; color:white;">🌲 Karadeniz</button>
+                <button class="iklim-btn" data-iklim="İç Anadolu Karasal İklimi" style="background:#f39c12; color:white;">🏔️ İç Anadolu</button>
+                <button class="iklim-btn" data-iklim="Doğu Anadolu Karasal İklimi" style="background:#3498db; color:white;">⛰️ Doğu Anadolu</button>
+                <button class="iklim-btn" data-iklim="Güneydoğu Anadolu Karasal İklimi" style="background:#c0392b; color:white;">🏜️ Güneydoğu</button>
+                <button class="iklim-btn" data-iklim="Trakya Karasal İklimi" style="background:#d35400; color:white;">🌾 Trakya</button>
+                <button class="iklim-btn" data-iklim="Marmara Geçiş İklimi" style="background:#8e44ad; color:white;">🌉 Marmara</button>
+            </div>
+
+            <div class="harita-konteynir">
+                <div id="harita"></div>
+                <div class="lejant">
+                    <h3>📊 İklim Lejantı</h3>
+                    <div id="lejant-icerik" class="renk-skalasi"></div>
+                    <div class="bilgi-kutu" id="iklim-bilgi">
+                        <h4>📍 İklim Bilgileri</h4>
+                        <p style="color: #666;">Haritadan bir ile tıklayın</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Coğrafya öğretiminde materyaller dersi kapsamında hazırlanmıştır</p>
+            <p style="font-size:0.8rem;">Sürüm: V5.2 | İklim verileri: il.json'dan okunur</p>
+        </div>
+    </footer>
+
+    <script>
+        // ==================== DEĞİŞKENLER ====================
+        let harita, geoJsonLayer;
+        let aktifIklim = 'hepsi';
+
+        // ==================== İKLİM RENKLERİ ====================
+        const iklimRenkleri = {
+            'Akdeniz': '#e74c3c',
+            'Karadeniz': '#27ae60',
+            'İç Anadolu': '#f39c12',
+            'Doğu Anadolu': '#3498db',
+            'Güneydoğu Anadolu': '#c0392b',
+            'Trakya': '#d35400',
+            'Marmara': '#8e44ad'
+        };
+
+        // ==================== İKLİM AÇIKLAMALARI ====================
+        const iklimAciklamalari = {
+            'Akdeniz İklimi': 'Yazları sıcak ve kurak, kışları ılık ve yağışlı. Kırmızı Akdeniz Toprakları (Terra Rossa). Turunçgil, zeytin, pamuk tarımı.',
+            'Karadeniz İklimi': 'Her mevsim yağışlı, yazları serin, kışları ılık. Kahverengi Orman Toprakları, Kireçsiz Kahverengi Orman Toprakları. Çay, fındık, mısır tarımı.',
+            'İç Anadolu Karasal İklimi': 'Yazları sıcak, kışları soğuk. Yağış az. Kestanerengi Topraklar, Kahverengi Bozkır Toprakları, Kireçsiz Kahverengi Topraklar, Tuzlu-Çorak Topraklar (Tuz Gölü çevresi). Tahıl tarımı ve hayvancılık.',
+            'Doğu Anadolu Karasal İklimi': 'Kışlar çok soğuk ve uzun, yazlar kısa ve serin. Kahverengi ve Kestanerengi Bozkır Toprakları, Yüksek Dağ Çayır Toprakları. Hayvancılık.',
+            'Güneydoğu Anadolu Karasal İklimi': 'Yazları çok sıcak ve kurak, kışları ılık. Kireçli ve Tuzlu Topraklar (Çorak Topraklar). Pamuk, antep fıstığı.',
+            'Trakya Karasal İklimi': 'Karasal iklim etkisiyle yazlar sıcak, kışlar soğuk. Vertisoller. Tahıl ve ayçiçeği.',
+            'Marmara Geçiş İklimi': 'Akdeniz ve Karadeniz iklimleri arasında geçiş özelliği gösterir. Kahverengi Orman Toprakları, Kestanerengi Topraklar.'
+        };
+
+        // ==================== LEJANT GÜNCELLEME ====================
+        function lejantGuncelle() {
+            const container = document.getElementById('lejant-icerik');
+            let html = '';
+            for (const [iklim, renk] of Object.entries(iklimRenkleri)) {
+                html += `<div class="renk-item"><div class="renk-kutu" style="background: ${renk}"></div><span>${iklim} İklimi</span></div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // ==================== RENK BULMA FONKSİYONU ====================
+        function iklimRengiBul(iklimAdi) {
+            if (!iklimAdi) return '#95a5a6';
+            
+            if (iklimAdi === 'Akdeniz İklimi') return '#e74c3c';
+            if (iklimAdi === 'Karadeniz İklimi') return '#27ae60';
+            if (iklimAdi === 'İç Anadolu Karasal İklimi') return '#f39c12';
+            if (iklimAdi === 'Doğu Anadolu Karasal İklimi') return '#3498db';
+            if (iklimAdi === 'Güneydoğu Anadolu Karasal İklimi') return '#c0392b';
+            if (iklimAdi === 'Trakya Karasal İklimi') return '#d35400';
+            if (iklimAdi === 'Marmara Geçiş İklimi') return '#8e44ad';
+            
+            return '#95a5a6';
+        }
+
+        // ==================== STİL FONKSİYONU ====================
+        function getStyle(feature) {
+            const iklim = feature.properties?.iklim || feature.properties?.Iklim;
+            
+            // Tüm iklimler gösteriliyorsa
+            if (aktifIklim === 'hepsi') {
+                return {
+                    fillColor: iklimRengiBul(iklim),
+                    weight: 1,
+                    color: 'white',
+                    fillOpacity: 0.8
+                };
+            } 
+            // Sadece seçili iklim gösteriliyorsa
+            else {
+                if (iklim === aktifIklim) {
+                    // Seçilen iklim - kendi renginde
+                    return {
+                        fillColor: iklimRengiBul(iklim),
+                        weight: 2,
+                        color: 'white',
+                        fillOpacity: 0.9
+                    };
+                } else {
+                    // Diğer iklimler - açık gri
+                    return {
+                        fillColor: '#e0e0e0',
+                        weight: 0.5,
+                        color: '#ccc',
+                        fillOpacity: 0.3
+                    };
+                }
+            }
+        }
+
+        // ==================== KATMANLARI YENİLE ====================
+        function refreshLayers() {
+            if (!geoJsonLayer) return;
+            
+            geoJsonLayer.eachLayer(layer => {
+                const feature = layer.feature;
+                const newStyle = getStyle(feature);
+                layer.setStyle(newStyle);
+                
+                // Tooltip'i güncelle
+                const props = feature.properties;
+                const ilAdi = props.AD || props.il_adi || 'Bilinmiyor';
+                const iklim = props?.iklim || props?.Iklim;
+                
+                if (aktifIklim === 'hepsi') {
+                    layer.bindTooltip(`${ilAdi} - ${iklim} İklimi`);
+                } else {
+                    if (iklim === aktifIklim) {
+                        layer.bindTooltip(`${ilAdi} - ${iklim} İklimi`);
+                    } else {
+                        layer.bindTooltip(`${ilAdi}`);
+                    }
+                }
+            });
+        }
+
+        // ==================== İKLİM FİLTRELE ====================
+        function filterByClimate(climateType) {
+            aktifIklim = climateType;
+            
+            // Butonları güncelle
+            document.querySelectorAll('.iklim-btn').forEach(btn => {
+                btn.classList.remove('aktif');
+                if (btn.getAttribute('data-iklim') === climateType) {
+                    btn.classList.add('aktif');
+                }
+            });
+            
+            // Katmanları yenile
+            refreshLayers();
+        }
+
+        // ==================== HARİTA YÜKLE ====================
+        async function loadMap() {
+            try {
+                const response = await fetch('il.json');
+                if (!response.ok) throw new Error('il.json bulunamadı!');
+                const data = await response.json();
+                
+                console.log('✅ JSON yüklendi, il sayısı:', data.features.length);
+                
+                // İklim dağılımını kontrol et
+                const climateCount = {};
+                data.features.forEach(f => {
+                    const climate = f.properties?.iklim || f.properties?.Iklim;
+                    if (climate) {
+                        climateCount[climate] = (climateCount[climate] || 0) + 1;
+                    }
+                });
+                console.log('📊 İklim dağılımı:', climateCount);
+                
+                // GeoJSON layer'ı oluştur
+                geoJsonLayer = L.geoJSON(data, {
+                    style: getStyle,
+                    onEachFeature: (feature, layer) => {
+                        const props = feature.properties;
+                        const ilAdi = props.AD || props.il_adi || 'Bilinmiyor';
+                        const plaka = props.Plaka || props.plaka;
+                        const iklim = props?.iklim || props?.Iklim || 'Belirtilmemiş';
+                        const nufus = props.Nüfus || props.nufus || 0;
+                        const yuzolcumu = props.Yüz || props.yuzolcumu || 0;
+                        const yogunluk = yuzolcumu > 0 ? (nufus / yuzolcumu).toFixed(1) : 0;
+                        
+                        layer.bindTooltip(`${ilAdi} - ${iklim} İklimi`);
+                        
+                        layer.on('click', () => {
+                            const renk = iklimRengiBul(iklim);
+                            document.getElementById('iklim-bilgi').innerHTML = `
+                                <h4>📍 ${ilAdi}</h4>
+                                <table class="iklim-bilgi-tablo">
+                                    <tr><td>Plaka Kodu:</td><td style="text-align:right;"><strong>${plaka}</strong></td></tr>
+                                    <tr><td>İklim Tipi:</td><td style="text-align:right;"><strong style="color:${renk}">${iklim} İklimi</strong></td></tr>
+                                    <tr><td>Açıklama:</td><td style="text-align:right;">${iklimAciklamalari[iklim] || 'Bilgi yok'}</td></tr>
+                                    <tr><td>Nüfus (2025):</td><td style="text-align:right;">${nufus.toLocaleString('tr-TR')}</td></tr>
+                                    <tr><td>Yüzölçümü:</td><td style="text-align:right;">${yuzolcumu.toLocaleString('tr-TR')} km²</td></tr>
+                                    <tr><td>Nüfus Yoğunluğu:</td><td style="text-align:right;">${yogunluk} kişi/km²</td></tr>
+                                </table>
+                                <button onclick="harita.setView([39.0, 35.0], 6)" style="margin-top:10px; padding:5px 10px; background:#3498db; color:white; border:none; border-radius:5px; cursor:pointer;">🗺️ Türkiye Geneline Dön</button>
+                            `;
+                            harita.fitBounds(layer.getBounds());
+                        });
+                    }
+                }).addTo(harita);
+                
+                if (geoJsonLayer.getBounds().isValid()) {
+                    harita.fitBounds(geoJsonLayer.getBounds());
+                }
+                
+                lejantGuncelle();
+                console.log('✅ İklim haritası hazır!');
+                
+            } catch (error) {
+                console.error('❌ Hata:', error);
+                document.getElementById('harita').innerHTML = `
+                    <div style="padding:2rem; text-align:center; background:#fff3f3; border-radius:10px;">
+                        <h3 style="color:#e74c3c;">❌ Harita Yüklenemedi</h3>
+                        <p>${error.message}</p>
+                        <p>il.json dosyasının varlığını ve "iklim" sütununu kontrol edin.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ==================== SAYFA BAŞLATMA ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            harita = L.map('harita').setView([39.0, 35.0], 6);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(harita);
+            
+            loadMap();
+            
+            // Buton olayları
+            document.querySelectorAll('.iklim-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const climateType = btn.getAttribute('data-iklim');
+                    filterByClimate(climateType);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
